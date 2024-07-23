@@ -1,13 +1,13 @@
-import firebase from 'firebase/app';
-import 'firebase/auth'; // Import Firebase Authentication module
-import 'firebase/database'; // Import Firebase Realtime Database module, if needed
+import firebase from '@react-native-firebase/app';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 
 // Import the google-services.json configuration file
-import * as firebaseConfig from '../android/app/google-services.json';
+import firebaseConfig from '../android/app/google-services.json'; 
 
 // Initialize Firebase
 if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig.default); // Assuming firebaseConfig is exported as default
+  firebase.initializeApp(firebaseConfig); // Initialize with the configuration
 }
 
-export default firebase;
+export { firestore, auth };
