@@ -2,14 +2,17 @@
   "name": "Is_Resilient_App",
   "version": "0.0.1",
   "private": true,
+  "description": "an app for the association \"Is Resilient\"",
+  "main": "index.js",
   "dependencies": {
-    "@react-native-firebase/app": "^19.2.0",
+    "@react-native-firebase/app": "^20.3.0",
+    "@react-native-firebase/auth": "^20.3.0",
+    "@react-native-firebase/firestore": "^20.3.0",
     "@react-native-google-signin/google-signin": "^12.2.1",
     "@react-navigation/drawer": "^6.7.2",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/native-stack": "^6.10.0",
     "@react-navigation/stack": "^6.4.0",
-    "firebase": "^10.12.3",
     "react": "18.2.0",
     "react-native": "0.73.6",
     "react-native-calendars": "^1.1305.0",
@@ -47,5 +50,7 @@
   },
   "engines": {
     "node": ">=18"
-  }
+  },
+  "author": "",
+  "license": "ISC"
 }

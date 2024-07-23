@@ -8,6 +8,7 @@ import HomeScreen from '../android/app/src/screens/HomeScreen';
 import DrawerNavigator from '../navigation/DrawerNavigator';
 import Settings from '../android/app/src/screens/Settings';
 import Inventory from '../android/app/src/screens/Inventory';
+import AddItem from '../android/app/src/screens/Inventory/AddItem';
 
 const Stack = createNativeStackNavigator();
 
@@ -52,6 +53,12 @@ export default function AppNavigation() {
         <Stack.Screen
           name="Inventory"
           component={Inventory}
+          options={{headerShown: false}}
+        />
+
+        <Stack.Screen
+          name="AddItem"
+          component={AddItem}
           options={{headerShown: false}}
         />
       </Stack.Navigator>

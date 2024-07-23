@@ -77,9 +77,9 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace "com.is_resilient_app"
-    defaultConfig {
+     defaultConfig {
         applicationId "com.is_resilient_app"
-        minSdkVersion rootProject.ext.minSdkVersion
+        minSdkVersion 23 
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
@@ -112,6 +112,8 @@ dependencies {
     implementation("com.facebook.react:flipper-integration")
     implementation platform('com.google.firebase:firebase-bom:32.8.0')
     implementation('com.google.firebase:firebase-analytics')
+    implementation ('com.google.firebase:firebase-firestore')
+
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
