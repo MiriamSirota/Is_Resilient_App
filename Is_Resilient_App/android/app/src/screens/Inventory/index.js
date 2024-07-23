@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import {firestore} from '../../../../../config/firebase';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const InventoryScreen = ({navigation}) => {
   const [items, setItems] = useState([]);
@@ -43,8 +44,11 @@ const InventoryScreen = ({navigation}) => {
     (item['product name'] || '').toLowerCase().includes(search.toLowerCase()),
   );
 
+  // Define shades of light blue
+  const shadesOfBlue = ['#d0e6f4', '#b3d7f3', '#9cc3f2'];
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <TextInput
         placeholder="Search items"
         value={search}
@@ -54,28 +58,41 @@ const InventoryScreen = ({navigation}) => {
       <Button
         title="Add Item"
         onPress={() => navigation.navigate('AddItem')}
-        style={styles.addButton} 
+        style={styles.addButton} // Add this line for styling
       />
       <FlatList
         data={filteredItems}
         keyExtractor={item => item.id}
-        renderItem={({item}) => (
-          <View style={styles.item}>
-            <Text>Product Name: {item['product name'] || 'N/A'}</Text>
-            <Text>Size: {item.size || 'N/A'}</Text>
-            <Text>Amount: {item.amount || 'N/A'}</Text>
-            <Text>Location: {item.location || 'N/A'}</Text>
-            <Text>Category: {item.catagory || 'N/A'}</Text>
+        renderItem={({item, index}) => (
+          <View
+            style={[
+              styles.item,
+              {
+                backgroundColor: shadesOfBlue[index % shadesOfBlue.length],
+              },
+            ]}>
+            <Text style={styles.itemText}>
+              Product Name: {item['product name'] || 'N/A'}
+            </Text>
+            <Text style={styles.itemText}>Size: {item.size || 'N/A'}</Text>
+            <Text style={styles.itemText}>Amount: {item.amount || 'N/A'}</Text>
+            <Text style={styles.itemText}>
+              Location: {item.location || 'N/A'}
+            </Text>
+            <Text style={styles.itemText}>
+              Category: {item.catagory || 'N/A'}
+            </Text>
           </View>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     padding: 20,
+    paddingBottom: 90, //insures the last item doesnt get cut off buy the buttom header
   },
   input: {
     borderBottomWidth: 1,
@@ -86,8 +103,14 @@ const styles = StyleSheet.create({
     marginBottom: 20, // Space between the button and the list
   },
   item: {
-    borderBottomWidth: 1,
-    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 10,
+  },
+  itemText: {
+    fontSize: 16,
     marginBottom: 5,
   },
 });
