@@ -1,17 +1,71 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'react-native-elements';
+import { useNavigation } from '@react-navigation/native';
+import { auth } from '../.././../../../config/firebase';
+import React, { useState, useEffect } from 'react';
 import {
   View,
+  TextInput,
+  StyleSheet,
+  Alert,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  TextInput,
 } from 'react-native';
-import React from 'react';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {Image} from 'react-native-elements';
-import {useNavigation} from '@react-navigation/native';
+import firestore from '@react-native-firebase/firestore';
 
 export default function Settings() {
   const navigation = useNavigation();
+  const user = auth().currentUser;
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      if (user) {
+        console.log('Authenticated User UID:', user.uid); // Debug log
+        try {
+          const userDoc = await firestore()
+            .collection('users')
+            .doc(user.uid)
+            .get();
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            console.log('User Data:', userData); // Debug log
+            setName(userData.name);
+            setEmail(user.email);
+          } else {
+            Alert.alert('Error', 'User not found');
+          }
+        } catch (error) {
+          console.error('Error fetching user details:', error); // Debug log
+          Alert.alert('Error', 'Could not fetch user details');
+        }
+      } else {
+        Alert.alert('Error', 'No authenticated user');
+      }
+    };
+
+    fetchUserDetails();
+  }, [user]);
+
+  const handleSaveChanges = async () => {
+    try {
+      if (email !== user.email) {
+        await user.updateEmail(email);
+      }
+      if (password) {
+        await user.updatePassword(password);
+      }
+      await firestore().collection('users').doc(user.uid).update({ name });
+      Alert.alert('Success', 'User details updated');
+    } catch (error) {
+      console.error('Error updating user details:', error); // Debug log
+      Alert.alert('Error', error.message);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <SafeAreaView>
@@ -27,24 +81,27 @@ export default function Settings() {
           <Text style={styles.text}>Full Name</Text>
           <TextInput
             style={styles.box}
-            value="Israel Israeli"
-            placeholder="change Name"
+            value={name}
+            onChangeText={setName}
+            placeholder="Change Name"
           />
           <Text style={styles.text}>Email Address</Text>
           <TextInput
             style={styles.box}
-            value="example@gmail.com"
-            // placeholder="Enter Email"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Change Email"
           />
           <Text style={styles.text}>Password</Text>
           <TextInput
             style={styles.box}
             secureTextEntry
-            value="test1234"
-            placeholder="change Password"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Change Password"
           />
 
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity style={styles.button} onPress={handleSaveChanges}>
             <Text> Save Changes </Text>
           </TouchableOpacity>
         </View>
@@ -52,67 +109,34 @@ export default function Settings() {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    padding: 20,
   },
   container2: {
-    backgroundColor: 'white',
-    paddingHorizontal: 45,
-    paddingTop: 8,
-    width: '100%',
-    height: '80%',
-    bottom: -20,
-    borderRadius: 20, // Adjust this value to control the roundness
-  },
-  container3: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-  },
-  text: {
-    color: 'gray',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'left',
-    width: '100%',
-    marginBottom: 10, // Adds spacing between the boxes
-  },
-  text3: {
-    color: 'black',
-    fontSize: 16,
-    marginRight: 10, // Adds spacing between the text elements
-  },
-  image: {
-    width: '80',
-    height: 250,
-    alignItems: 'center',
+    marginTop: 20,
   },
   box: {
-    backgroundColor: '#e3e5e8',
-    borderRadius: 10, // Adjust this value to control the roundness
-    marginBottom: 16, // Adds spacing between the boxes
+    borderBottomWidth: 1,
+    padding: 8,
+    fontSize: 16,
+    marginBottom: 15,
+  },
+  text: {
+    fontSize: 16,
+    marginBottom: 5,
   },
   button: {
-    backgroundColor: 'lightblue',
-    paddingVertical: 10,
-    borderRadius: 100,
-    marginTop: 20,
-    justifyContent: 'center',
+    backgroundColor: '#1E90FF',
+    padding: 15,
+    borderRadius: 5,
     alignItems: 'center',
   },
-  buttonText: {
-    color: 'gray',
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  logInText: {
-    fontWeight: 'bold',
-    fontSize: 18,
-    color: '#3a4245',
-    paddingVertical: 10,
+  image: {
+    width: 100,
+    height: 100,
+    alignSelf: 'center',
   },
 });

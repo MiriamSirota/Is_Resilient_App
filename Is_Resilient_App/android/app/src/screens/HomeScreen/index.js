@@ -11,6 +11,10 @@ import {
 } from 'react-native';
 import {Calendar} from 'react-native-calendars';
 import {useNavigation} from '@react-navigation/native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {DrawerActions} from '@react-navigation/drawer';
+import CustomDrawerContent from '../../../../../navigation/CustomDrawerContent';
+import {Icon} from 'react-native-vector-icons/MaterialIcons';
 
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
@@ -39,10 +43,25 @@ export default function HomeScreen() {
   // Sample events data
   const events = {
     '2024-07-17': [
-      {name: 'Event 1', location: 'Location 1', time: '10:00 AM'},
-      {name: 'Event 2', location: 'Location 2', time: '2:00 PM'},
+      {name: 'BBQ 999 Brigade', location: 'Nir Oz', time: '10:00 AM'},
+      {
+        name: 'AC Giving to 800 Brigade',
+        location: 'Gaza Strip',
+        time: '2:00 PM',
+      },
     ],
-    '2024-07-18': [{name: 'Event 3', location: 'Location 3', time: '4:00 PM'}],
+    '2024-07-18': [
+      {name: 'Casualty Officers', location: 'Tel Afek', time: '5:00 PM'},
+    ],
+    '2024-07-21': [
+      {name: 'BBQ 996 Brigade', location: 'Metula', time: '3:00 PM'},
+    ],
+    '2024-07-25': [
+      {name: 'BBQ 887 Brigade', location: 'Malcia', time: '4:00 PM'},
+    ],
+    '2024-07-29': [
+      {name: 'אירוע לקצינות נפגעים', location: 'מושב שרשרת', time: '6:00 PM'},
+    ],
     // Add more events as needed
   };
 
