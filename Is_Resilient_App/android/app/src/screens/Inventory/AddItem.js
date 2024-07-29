@@ -8,6 +8,7 @@ const AddItemScreen = ({navigation}) => {
   const [size, setSize] = useState('One size');
   const [amount, setAmount] = useState('');
   const [location, setLocation] = useState('');
+  const [catagory, setCatagory] = useState('');
 
   const handleAddItem = async () => {
     if (!name || !amount || !location) {
@@ -23,6 +24,7 @@ const AddItemScreen = ({navigation}) => {
           size,
           amount: Number(amount), // Convert amount to number
           location,
+          catagory,
         });
       Alert.alert('Success', 'Item added to inventory');
       navigation.goBack();
@@ -78,6 +80,16 @@ const AddItemScreen = ({navigation}) => {
           placeholder="Location"
           value={location}
           onChangeText={setLocation}
+          style={styles.input}
+        />
+      </View>
+      <View
+        style={[styles.inputContainer, {backgroundColor: backgroundColors[1]}]}>
+        <Text style={styles.labe1}>Category</Text>
+        <TextInput
+          placeholder="Category"
+          value={catagory}
+          onChangeText={setCatagory}
           style={styles.input}
         />
       </View>

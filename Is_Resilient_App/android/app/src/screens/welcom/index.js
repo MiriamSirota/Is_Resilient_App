@@ -18,7 +18,7 @@ export default function Welcome() {
         <Text style={styles.text1}> Let's Get Started!</Text>
         <View style={styles.imageContainer}>
           <Image
-            source={require('../../../../../assets/images/woman_soldier.jpg')}
+            source={require('../../../../../assets/images/logois.jpg')}
             style={styles.image}
           />
         </View>
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 11,
     borderRadius: 100,
-    bottom:-130,
+    bottom: -130,
   },
   buttonText: {
     color: 'gray',
@@ -93,7 +93,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  container2: { //"already have an accout"
+  container2: {
+    //"already have an accout"
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',

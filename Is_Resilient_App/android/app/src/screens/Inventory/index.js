@@ -41,7 +41,7 @@ const InventoryScreen = ({navigation}) => {
   }, []);
 
   const filteredItems = items.filter(item =>
-    (item['product name'] || '').toLowerCase().includes(search.toLowerCase()),
+    (item['name'] || '').toLowerCase().includes(search.toLowerCase()),
   );
 
   // Define shades of light blue
@@ -72,15 +72,15 @@ const InventoryScreen = ({navigation}) => {
               },
             ]}>
             <Text style={styles.itemText}>
-              Product Name: {item['product name'] || 'N/A'}
+              Product Name: {item['name'] || ' '}
             </Text>
-            <Text style={styles.itemText}>Size: {item.size || 'N/A'}</Text>
-            <Text style={styles.itemText}>Amount: {item.amount || 'N/A'}</Text>
+            <Text style={styles.itemText}>Size: {item.size || 'one size'}</Text>
+            <Text style={styles.itemText}>Amount: {item.amount || ' '}</Text>
             <Text style={styles.itemText}>
-              Location: {item.location || 'N/A'}
+              Location: {item.location || ' '}
             </Text>
             <Text style={styles.itemText}>
-              Category: {item.catagory || 'N/A'}
+              Category: {item.catagory || ' '}
             </Text>
           </View>
         )}

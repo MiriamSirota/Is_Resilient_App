@@ -1,30 +1,60 @@
+import React, {useState} from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   TextInput,
+  Alert,
 } from 'react-native';
-import React from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Icon, Image} from 'react-native-elements';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, CommonActions} from '@react-navigation/native';
+import {auth} from '../.././../../../config/firebase';
+import firestore from '@react-native-firebase/firestore';
 
 export default function LogIn() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const navigation = useNavigation();
+
+  const handleLogin = async () => {
+    try {
+      const userCredential = await auth().signInWithEmailAndPassword(
+        email,
+        password,
+      );
+      const user = userCredential.user;
+
+      // Fetch additional user information from Firestore
+      const userDoc = await firestore().collection('users').doc(user.uid).get();
+      if (!userDoc.exists) {
+        Alert.alert('Error', 'User data not found in Firestore');
+        return;
+      }
+
+      const userData = userDoc.data();
+      console.log('User Data:', userData); // Debug log
+
+      // Navigate to the DrawerNavigator after successful login and data fetching
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{name: 'DrawerNavigator'}],
+        }),
+      );
+    } catch (error) {
+      if (error.code === 'auth/user-not-found') {
+        Alert.alert('Error', "You don't have an account. Please sign up.");
+      } else {
+        Alert.alert('Error', error.message);
+      }
+    }
+  };
+
   return (
     <View style={styles.container}>
       <SafeAreaView>
-        <View style={{flexDirection: 'row', alignItems: 'center', padding: 10}}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon
-              name="arrow-left"
-              type="font-awesome"
-              size={20}
-              color="black"
-            />
-          </TouchableOpacity>
-        </View>
         <View>
           <Image
             source={require('../../../../../assets/images/unlock3.png')}
@@ -37,35 +67,36 @@ export default function LogIn() {
           <Text style={styles.text}>Email Address</Text>
           <TextInput
             style={styles.box}
-            value="example@gmail.com"
+            value={email}
+            onChangeText={setEmail}
             placeholder="Enter Email"
           />
           <Text style={styles.text}>Password</Text>
           <TextInput
             style={styles.box}
             secureTextEntry
-            value="test1234"
+            value={password}
+            onChangeText={setPassword}
             placeholder="Enter Password"
           />
           <TouchableOpacity style={styles.forgot}>
-            <Text> Forgot Password? </Text>
+            <Text>Forgot Password?</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.navigate('Home')}>
-            <Text> Log in </Text>
+          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+            <Text>Log in</Text>
           </TouchableOpacity>
         </View>
         <SafeAreaView style={styles.container3}>
-          <Text style={styles.text3}> Don't have an account?</Text>
+          <Text style={styles.text3}>Don't have an account?</Text>
           <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-            <Text style={styles.logInText}> Sign up</Text>
+            <Text style={styles.logInText}>Sign up</Text>
           </TouchableOpacity>
         </SafeAreaView>
       </View>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -78,8 +109,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '50%',
     bottom: -20,
-    borderRadius: 20, // Adjust this value to control the roundness
-    borderWidth: 1, // Optional: to see the border clearly
+    borderRadius: 20,
+    borderWidth: 1,
   },
   container3: {
     flexDirection: 'row',
@@ -93,12 +124,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'left',
     width: '100%',
-    marginBottom: 10, // Adds spacing between the boxes
+    marginBottom: 10,
   },
   text3: {
     color: 'black',
     fontSize: 16,
-    marginRight: 10, // Adds spacing between the text elements
+    marginRight: 10,
   },
   image: {
     width: '85%',
@@ -107,8 +138,8 @@ const styles = StyleSheet.create({
   },
   box: {
     backgroundColor: '#e3e5e8',
-    borderRadius: 10, // Adjust this value to control the roundness
-    marginBottom: 16, // Adds spacing between the boxes
+    borderRadius: 10,
+    marginBottom: 16,
   },
   forgot: {
     alignItems: 'flex-end',
