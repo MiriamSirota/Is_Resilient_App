@@ -10,18 +10,12 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import {auth} from '../config/firebase';
 import {DrawerContentScrollView, DrawerItem} from '@react-navigation/drawer';
+import {useAuth} from '../android/app/src/context/AuthContext';
 
 const CustomDrawerContent = props => {
   const navigation = useNavigation();
 
-  const handleLogout = async () => {
-    try {
-      await auth().signOut();
-      navigation.navigate('LogIn'); // Navigate to the login screen
-    } catch (error) {
-      Alert.alert('Error', error.message);
-    }
-  };
+  const {handleLogout} = useAuth();
 
   return (
     <DrawerContentScrollView {...props}>
@@ -30,37 +24,50 @@ const CustomDrawerContent = props => {
           label="Home"
           icon={() => (
             <Image
-              source={require('../../../../../assets/images/unlock3.png')}
+              source={require('../assets/images/home_icon.jpg')}
               style={styles.iconImage}
             />
           )}
           onPress={() => props.navigation.navigate('Home')}
         />
         <DrawerItem
-          label="Settings"
+          label="My Space"
           icon={() => (
             <Image
-              source={require('../../../../../assets/images/unlock3.png')}
+              source={require('../assets/images/profile.png')}
               style={styles.iconImage}
             />
           )}
-          onPress={() => props.navigation.navigate('Settings')}
+          onPress={() => props.navigation.navigate('MySpace')}
         />
+
         <DrawerItem
           label="Requests"
           icon={() => (
             <Image
-              source={require('../../../../../assets/images/unlock3.png')}
+              source={require('../assets/images/chat_icon.jpg')}
               style={styles.iconImage}
             />
           )}
           onPress={() => props.navigation.navigate('Requests')}
         />
+
+        <DrawerItem
+          label="Create Event"
+          icon={() => (
+            <Image
+              source={require('../assets/images/event_black_icon.jpg')}
+              style={styles.iconImage}
+            />
+          )}
+          onPress={() => props.navigation.navigate('CreateEvent')}
+        />
+
         <DrawerItem
           label="Inventory"
           icon={() => (
             <Image
-              source={require('../../../../../assets/images/unlock3.png')}
+              source={require('../assets/images/inventory1.png')}
               style={styles.iconImage}
             />
           )}
@@ -70,7 +77,7 @@ const CustomDrawerContent = props => {
           label="Add Item"
           icon={() => (
             <Image
-              source={require('../../../../../assets/images/additem.ico')}
+              source={require('../assets/images/additem1.jpg')}
               style={styles.iconImage}
             />
           )}
@@ -80,11 +87,22 @@ const CustomDrawerContent = props => {
           label="Take Item"
           icon={() => (
             <Image
-              source={require('../../../../../assets/images/takeitem1.jpg')}
+              source={require('../assets/images/takeitem1.jpg')}
               style={styles.iconImage}
             />
           )}
           onPress={() => props.navigation.navigate('TakeItem')}
+        />
+
+        <DrawerItem
+          label="Settings"
+          icon={() => (
+            <Image
+              source={require('../assets/images/settings_icon.jpg')}
+              style={styles.iconImage}
+            />
+          )}
+          onPress={() => props.navigation.navigate('Settings')}
         />
 
         <View style={styles.drawerFooter}>
@@ -108,20 +126,19 @@ const styles = StyleSheet.create({
   },
   drawerFooter: {
     marginTop: 'auto', // Push the footer to the bottom
-    padding: 20,
+    padding: 40,
     borderTopWidth: 1,
     borderTopColor: '#ddd',
   },
   logoutButton: {
-    backgroundColor: 'lightblue',
+    //backgroundColor: 'lightblue',
     paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     borderRadius: 5,
   },
   logoutText: {
     fontSize: 16,
-    color: 'white',
-    textAlign: 'center',
+    color: 'black',
   },
 });
 

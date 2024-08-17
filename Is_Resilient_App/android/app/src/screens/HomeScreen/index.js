@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   TouchableOpacity,
   Image,
@@ -8,13 +8,15 @@ import {
   Text,
   Modal,
   Dimensions,
+  Alert,
+  Button,
 } from 'react-native';
 import {Calendar} from 'react-native-calendars';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {DrawerActions} from '@react-navigation/drawer';
 import CustomDrawerContent from '../../../../../navigation/CustomDrawerContent';
-import {Icon} from 'react-native-vector-icons/MaterialIcons';
+import {auth, firestore} from '../../../../../config/firebase';
+import {useAuth} from '../../context/AuthContext';
 
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
@@ -23,6 +25,51 @@ export default function HomeScreen() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedDay, setSelectedDay] = useState('');
   const [todayEvents, setTodayEvents] = useState([]);
+  const [events, setEvents] = useState({});
+  const {handleLogout} = useAuth();
+
+  useEffect(() => {
+    // Set up a real-time listener for events
+    const unsubscribe = firestore()
+      .collection('events')
+      .onSnapshot(
+        snapshot => {
+          if (snapshot && !snapshot.empty) {
+            const eventsData = {};
+
+            snapshot.forEach(doc => {
+              const event = doc.data();
+              const eventDate = event.date;
+
+              if (!eventsData[eventDate]) {
+                eventsData[eventDate] = [];
+              }
+
+              eventsData[eventDate].push({
+                name: event.name,
+                location: event.location,
+                time: event.time,
+              });
+            });
+
+            setEvents(eventsData);
+          } else {
+            console.warn('Snapshot is empty or undefined:', snapshot);
+            setEvents({}); // Clear events if snapshot is invalid or empty
+          }
+        },
+        error => {
+          console.error('Error fetching events from Firestore:', error);
+        },
+      );
+
+    // Cleanup function to unsubscribe from the listener when the component unmounts
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, []);
 
   const handleImagePress = image => {
     setSelectedImage(image);
@@ -40,29 +87,46 @@ export default function HomeScreen() {
     setTodayEvents(eventsForDay);
   };
 
-  // Sample events data
-  const events = {
-    '2024-07-17': [
-      {name: 'BBQ 999 Brigade', location: 'Nir Oz', time: '10:00 AM'},
-      {
-        name: 'AC Giving to 800 Brigade',
-        location: 'Gaza Strip',
-        time: '2:00 PM',
-      },
-    ],
-    '2024-07-18': [
-      {name: 'Casualty Officers', location: 'Tel Afek', time: '5:00 PM'},
-    ],
-    '2024-07-21': [
-      {name: 'BBQ 996 Brigade', location: 'Metula', time: '3:00 PM'},
-    ],
-    '2024-07-25': [
-      {name: 'BBQ 887 Brigade', location: 'Malcia', time: '4:00 PM'},
-    ],
-    '2024-07-29': [
-      {name: 'אירוע לקצינות נפגעים', location: 'מושב שרשרת', time: '6:00 PM'},
-    ],
-    // Add more events as needed
+  const handleSignUp = async event => {
+    try {
+      const currentUser = auth().currentUser;
+
+      if (!currentUser) {
+        Alert.alert('Error', 'You need to be logged in to sign up for events.');
+        return;
+      }
+
+      const userId = currentUser.uid;
+      const userDocRef = firestore().collection('users').doc(userId);
+
+      const userDoc = await userDocRef.get();
+
+      if (!userDoc.exists) {
+        await userDocRef.set({
+          events: [
+            {...event, signedUpAt: firestore.FieldValue.serverTimestamp()},
+          ],
+        });
+      } else {
+        await userDocRef.update({
+          events: firestore.FieldValue.arrayUnion({
+            ...event,
+            signedUpAt: firestore.FieldValue.serverTimestamp(),
+          }),
+        });
+      }
+
+      Alert.alert(
+        'Signed Up',
+        `You have signed up for ${event.name} at ${event.location}!`,
+      );
+    } catch (error) {
+      console.error('Error signing up for event:', error); // This will log the exact error
+      Alert.alert(
+        'Error',
+        'There was a problem signing up for the event. Please try again.',
+      );
+    }
   };
 
   const markedDates = Object.keys(events).reduce((acc, date) => {
@@ -113,6 +177,7 @@ export default function HomeScreen() {
               <Text style={styles.eventText}>Name: {event.name}</Text>
               <Text style={styles.eventText}>Location: {event.location}</Text>
               <Text style={styles.eventText}>Time: {event.time}</Text>
+              <Button title="Sign Up" onPress={() => handleSignUp(event)} />
             </View>
           ))
         )}

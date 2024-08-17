@@ -9,6 +9,8 @@ import Inventory from '../android/app/src/screens/Inventory';
 import AddItem from '../android/app/src/screens/Inventory/AddItem';
 import CustomDrawerContent from '../navigation/CustomDrawerContent';
 import TakeItem from '../android/app/src/screens/Inventory/TakeItem';
+import MySpace from '../android/app/src/screens/MySpace';
+import CreateEventScreen from '../android/app/src/screens/CreateEvent';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -23,6 +25,8 @@ export default function DrawerNavigator() {
       <Drawer.Screen name="Inventory" component={Inventory} />
       <Drawer.Screen name="AddItem" component={AddItem} />
       <Drawer.Screen name="TakeItem" component={TakeItem} />
+      <Drawer.Screen name="MySpace" component={MySpace} />
+      <Drawer.Screen name="CreateEvent" component={CreateEventScreen} />
     </Drawer.Navigator>
   );
 }

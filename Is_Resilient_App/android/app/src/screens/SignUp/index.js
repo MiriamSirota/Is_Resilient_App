@@ -4,13 +4,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   TextInput,
-  Alert
+  Alert,
 } from 'react-native';
-import React, { useState }  from 'react';
+import React, {useState} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Icon, Image} from 'react-native-elements';
 import {useNavigation} from '@react-navigation/native';
-import { auth } from '../../../../../config/firebase';
+import {auth, firestore} from '../../../../../config/firebase';
 
 export default function SignUp() {
   const navigation = useNavigation();
@@ -23,11 +23,28 @@ export default function SignUp() {
   const handleSignUp = async () => {
     try {
       // Create a new user with email and password
-      await auth().createUserWithEmailAndPassword(email, password);
+      const userCredential = await auth().createUserWithEmailAndPassword(
+        email,
+        password,
+      );
+      const user = userCredential.user;
+
       // Optionally, you can update the user's profile with the full name
-      const user = auth().currentUser;
       await user.updateProfile({
-        displayName: fullName
+        displayName: fullName,
+      });
+
+      // Add user to Firestore 'users' collection
+      await firestore().collection('users').doc(user.uid).set({
+        name: fullName,
+        email,
+        role,
+        // Add other user details if needed
+      });
+
+      // Add user role to Firestore 'roles' collection
+      await firestore().collection('roles').doc(user.uid).set({
+        role: 'user', // Default role, change as needed
       });
 
       // Notify the user of successful sign-up
@@ -47,11 +64,10 @@ export default function SignUp() {
       }
     }
   };
-
   return (
     <View style={styles.container}>
       <SafeAreaView>
-        <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
+        <View style={{flexDirection: 'row', alignItems: 'center', padding: 10}}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon
               name="arrow-left"
@@ -93,7 +109,7 @@ export default function SignUp() {
             onChangeText={setPassword} // Update state on change
             placeholder="Enter Password"
           />
-          
+
           <TouchableOpacity style={styles.button} onPress={handleSignUp}>
             <Text> Sign Up </Text>
           </TouchableOpacity>
