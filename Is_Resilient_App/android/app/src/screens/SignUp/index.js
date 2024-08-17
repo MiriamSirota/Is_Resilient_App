@@ -109,7 +109,6 @@ export default function SignUp() {
             onChangeText={setPassword} // Update state on change
             placeholder="Enter Password"
           />
-
           <TouchableOpacity style={styles.button} onPress={handleSignUp}>
             <Text> Sign Up </Text>
           </TouchableOpacity>
