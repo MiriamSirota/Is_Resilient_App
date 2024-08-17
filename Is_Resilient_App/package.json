@@ -8,28 +8,25 @@
     "@react-native-firebase/app": "^20.3.0",
     "@react-native-firebase/auth": "^20.3.0",
     "@react-native-firebase/firestore": "^20.3.0",
+    "@react-native-firebase/storage": "^20.3.0",
     "@react-native-google-signin/google-signin": "^12.2.1",
     "@react-native-picker/picker": "^2.7.7",
     "@react-navigation/drawer": "^6.7.2",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/native-stack": "^6.10.0",
     "@react-navigation/stack": "^6.4.0",
-<<<<<<< HEAD
     "@tensorflow-models/qna": "^1.0.2",
     "@tensorflow/tfjs": "^4.20.0",
     "@tensorflow/tfjs-react-native": "^1.0.0",
     "axios": "^1.7.2",
     "openai": "^4.55.9",
-=======
-    "axios": "^1.7.2",
->>>>>>> MiriamSirota/main
     "react": "18.2.0",
     "react-native": "0.73.6",
     "react-native-calendars": "^1.1305.0",
     "react-native-elements": "^3.4.3",
     "react-native-gesture-handler": "^2.17.1",
+    "react-native-image-picker": "^7.1.2",
     "react-native-linear-gradient": "^2.8.3",
-<<<<<<< HEAD
     "react-native-openai": "^0.6.1",
     "react-native-reanimated": "^3.14.0",
     "react-native-safe-area-context": "^4.10.8",
@@ -37,12 +34,6 @@
     "react-native-vector-icons": "^10.1.0",
     "react-native-video": "^6.4.4",
     "react-native-webview": "^13.10.5"
-=======
-    "react-native-reanimated": "^3.14.0",
-    "react-native-safe-area-context": "^4.10.8",
-    "react-native-screens": "^3.32.0",
-    "react-native-vector-icons": "^10.1.0"
->>>>>>> MiriamSirota/main
   },
   "scripts": {
     "android": "react-native run-android",

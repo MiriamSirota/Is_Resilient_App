@@ -8,7 +8,7 @@ const qna = require('@tensorflow-models/qna');
 import {WebView} from 'react-native-webview';
 
 const Requests = () => {
-  let context = 'ffff';
+  let context = 'Hi Miriam, name is Noa, i got your number from my fried moshe yakir.';
   const injectedJavaScript = `document.getElementById('context').value = '${context}; '
   const meta = document.createElement('meta'); meta.setAttribute('name', 'viewport'); 
 meta.setAttribute('content', 'width=device-width,   initial-scale=1.0'); 

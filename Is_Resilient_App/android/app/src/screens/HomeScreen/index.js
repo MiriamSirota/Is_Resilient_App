@@ -2,31 +2,38 @@ import React, {useState, useEffect} from 'react';
 import {
   TouchableOpacity,
   Image,
-  ScrollView,
   StyleSheet,
   View,
   Text,
   Modal,
   Dimensions,
   Alert,
+  FlatList,
   Button,
 } from 'react-native';
 import {Calendar} from 'react-native-calendars';
 import {useNavigation} from '@react-navigation/native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import CustomDrawerContent from '../../../../../navigation/CustomDrawerContent';
-import {auth, firestore} from '../../../../../config/firebase';
+import {
+  auth,
+  firestore,
+  uploadImageToFirebase,
+  fetchGalleryImages,
+} from '../../../../../config/firebase';
 import {useAuth} from '../../context/AuthContext';
+import {launchImageLibrary} from 'react-native-image-picker';
 
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
 export default function HomeScreen() {
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedMedia, setSelectedMedia] = useState(null);
   const [selectedDay, setSelectedDay] = useState('');
   const [todayEvents, setTodayEvents] = useState([]);
   const [events, setEvents] = useState({});
   const {handleLogout} = useAuth();
+  const [activeTab, setActiveTab] = useState('news'); // tabs
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [galleryImages, setGalleryImages] = useState([]);
 
   useEffect(() => {
     // Set up a real-time listener for events
@@ -63,6 +70,14 @@ export default function HomeScreen() {
         },
       );
 
+    // Fetch all images from Firebase Storage when the component mounts
+    const loadGalleryImages = async () => {
+      const images = await fetchGalleryImages();
+      setGalleryImages(images);
+    };
+
+    loadGalleryImages();
+
     // Cleanup function to unsubscribe from the listener when the component unmounts
     return () => {
       if (unsubscribe) {
@@ -72,13 +87,13 @@ export default function HomeScreen() {
   }, []);
 
   const handleImagePress = image => {
-    setSelectedImage(image);
+    setSelectedMedia(image);
     setModalVisible(true);
   };
 
   const handleCloseModal = () => {
     setModalVisible(false);
-    setSelectedImage(null);
+    setSelectedMedia(null);
   };
 
   const handleDayPress = day => {
@@ -103,19 +118,17 @@ export default function HomeScreen() {
 
       if (!userDoc.exists) {
         await userDocRef.set({
-          events: [
-            {...event, signedUpAt: firestore.FieldValue.serverTimestamp()},
-          ],
+          events: [{...event}],
         });
       } else {
+        // Update the existing user document
+        const userData = userDoc.data();
+        const updatedEvents = [...userData.events, {...event}];
+
         await userDocRef.update({
-          events: firestore.FieldValue.arrayUnion({
-            ...event,
-            signedUpAt: firestore.FieldValue.serverTimestamp(),
-          }),
+          events: updatedEvents, // Update with the new event without timestamp
         });
       }
-
       Alert.alert(
         'Signed Up',
         `You have signed up for ${event.name} at ${event.location}!`,
@@ -134,70 +147,207 @@ export default function HomeScreen() {
     return acc;
   }, {});
 
-  const photos = [
-    require('../../../../../assets/images/hanikra1.jpeg'),
-    require('../../../../../assets/images/hanikra2.jpeg'),
-    require('../../../../../assets/images/hanikra3.jpeg'),
-    require('../../../../../assets/images/hanikra4.jpeg'),
-    require('../../../../../assets/images/hanikra5.jpeg'),
+  const handleImagePicker = () => {
+    launchImageLibrary({mediaType: 'photo'}, response => {
+      if (response.assets) {
+        setSelectedImage(response.assets[0].uri);
+      }
+    });
+  };
+
+  const handleUpload = async () => {
+    if (selectedImage) {
+      try {
+        const downloadURL = await uploadImageToFirebase(selectedImage);
+        setGalleryImages(prevImages => [...prevImages, downloadURL]);
+        alert('Image uploaded successfully!');
+        setSelectedImage(null); // Clear the selected image after upload
+      } catch (error) {
+        console.error('Upload failed:', error);
+        alert('Image upload failed.');
+      }
+    }
+  };
+
+  const newsFeedItems = [
+    {
+      id: '1',
+      image: require('../../../../../assets/images/hanikra1.jpeg'),
+      headline: 'Casualty Officers Event',
+      description:
+        'Last week we had an event for casualty officers. Thank you to everyone who came and helped. The event was a huge success.',
+    },
+    {
+      id: '2',
+      image: require('../../../../../assets/images/hanikra2.jpeg'),
+      headline: 'BBQ to Brigade 999',
+      description:
+        'Last week we had an event for casualty officers. Thank you to everyone who came and helped. The event was a huge success.',
+    },
+    // Add more items here
   ];
 
-  const [selectedPhoto, setSelectedPhoto] = useState(null);
-  const openPhotoModal = photo => {
-    setSelectedPhoto(photo);
-    setModalVisible(true);
+  const renderNewsItem = ({item}) => (
+    <View style={styles.newsItemContainer}>
+      <Text style={styles.newsItemHeadline}>{item.headline}</Text>
+      <Image source={item.image} style={styles.newsItemImage} />
+      <Text style={styles.newsItemDescription}>{item.description}</Text>
+    </View>
+  );
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'news':
+        return (
+          <FlatList
+            data={newsFeedItems}
+            renderItem={renderNewsItem}
+            keyExtractor={item => item.id}
+          />
+        );
+      case 'scheduledEvents':
+        return (
+          <FlatList
+            ListHeaderComponent={
+              <>
+                <View style={styles.calendarContainer}>
+                  <Text style={styles.sectionHeader}></Text>
+                  <Calendar
+                    markedDates={markedDates}
+                    markingType={'multi-dot'}
+                    onDayPress={handleDayPress}
+                    style={styles.calendar}
+                  />
+                </View>
+
+                <View style={styles.eventDetailsContainer}>
+                  <Text style={styles.sectionHeader}>Event Details</Text>
+                  {todayEvents.length === 0 ? (
+                    <Text style={styles.noEventsText}>
+                      No events for this day
+                    </Text>
+                  ) : (
+                    todayEvents.map((event, index) => (
+                      <View key={index} style={styles.eventBox}>
+                        <View style={styles.eventRow}>
+                          <Text style={styles.eventText}>{event.name}</Text>
+                        </View>
+                        <View style={styles.eventRow}>
+                          <Image
+                            source={require('../../../../../assets/images/location1.png')}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.eventText}>{event.location}</Text>
+                        </View>
+                        <View style={styles.eventRow}>
+                          <Image
+                            source={require('../../../../../assets/images/clock1.jpg')}
+                            style={styles.icon}
+                          />
+                          <Text style={styles.eventText}>{event.time}</Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.signUpButton}
+                          onPress={() => handleSignUp(event)}>
+                          <Text style={styles.signUpButtonText}>Sign Up</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))
+                  )}
+                </View>
+              </>
+            }
+            data={todayEvents}
+            renderItem={() => <View />} // Empty view just to satisfy FlatList
+            keyExtractor={(item, index) => index.toString()}
+          />
+        );
+      case 'gallery':
+        return (
+          <View style={{flex: 1, padding: 10}}>
+            <FlatList
+              data={galleryImages}
+              renderItem={renderMediaItem}
+              keyExtractor={(item, index) => index.toString()}
+              numColumns={2}
+              columnWrapperStyle={styles.mediaRow}
+            />
+            {selectedImage && (
+              <Image
+                source={{uri: selectedImage}}
+                style={{width: 100, height: 100, marginVertical: 10}}
+              />
+            )}
+            <View style={styles.buttonBox}>
+              <TouchableOpacity
+                style={styles.clearButton}
+                onPress={handleImagePicker}>
+                <Text style={styles.buttonText}>+ add Image</Text>
+              </TouchableOpacity>
+
+              {selectedImage && (
+                <TouchableOpacity
+                  style={styles.uploadButton}
+                  onPress={handleUpload}>
+                  <Text style={styles.buttonText}>Upload Image</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        );
+      default:
+        return null;
+    }
   };
 
-  const closePhotoModal = () => {
-    setSelectedPhoto(null);
-    setModalVisible(false);
-  };
-
-  const navigation = useNavigation();
+  const renderMediaItem = ({item}) => (
+    <TouchableOpacity
+      style={styles.mediaItem}
+      onPress={() => handleImagePress({uri: item})}>
+      <Image source={{uri: item}} style={styles.media} />
+    </TouchableOpacity>
+  );
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.calendarContainer}>
-        <Text style={styles.sectionHeader}>Events Scheduel</Text>
-        <Calendar
-          markedDates={markedDates}
-          markingType={'multi-dot'}
-          onDayPress={handleDayPress}
-          style={styles.calendar}
-        />
+    <>
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          onPress={() => setActiveTab('news')}
+          style={styles.tab}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'news' && styles.activeTabText,
+            ]}>
+            News
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setActiveTab('scheduledEvents')}
+          style={styles.tab}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'scheduledEvents' && styles.activeTabText,
+            ]}>
+            Scheduled Events
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setActiveTab('gallery')}
+          style={styles.tab}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'gallery' && styles.activeTabText,
+            ]}>
+            Gallery
+          </Text>
+        </TouchableOpacity>
       </View>
+      {renderContent()}
 
-      <View style={styles.eventDetailsContainer}>
-        <Text style={styles.sectionHeader}>Event Details</Text>
-        {todayEvents.length === 0 ? (
-          <Text style={styles.noEventsText}>No events for this day</Text>
-        ) : (
-          todayEvents.map((event, index) => (
-            <View key={index} style={styles.eventBox}>
-              <Text style={styles.eventText}>Name: {event.name}</Text>
-              <Text style={styles.eventText}>Location: {event.location}</Text>
-              <Text style={styles.eventText}>Time: {event.time}</Text>
-              <Button title="Sign Up" onPress={() => handleSignUp(event)} />
-            </View>
-          ))
-        )}
-      </View>
-
-      <View style={styles.photoGalleryContainer}>
-        <Text style={styles.sectionHeader}>Event Photos</Text>
-        <ScrollView>
-          {photos.map((photo, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.photoItem}
-              onPress={() => handleImagePress(photo)}>
-              <Image source={photo} style={styles.photo} />
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {selectedImage && (
+      {selectedMedia && (
         <Modal
           animationType="slide"
           transparent={true}
@@ -210,28 +360,52 @@ export default function HomeScreen() {
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
             <Image
-              source={selectedImage}
-              style={styles.fullImage}
+              source={{uri: selectedMedia.uri}}
+              style={styles.fullMedia}
               resizeMode="contain"
             />
           </View>
         </Modal>
       )}
-    </ScrollView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
   },
-  sectionHeader: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    paddingHorizontal: 20,
+  tabContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     paddingVertical: 10,
-    color: '#417e96',
+    backgroundColor: '#0d7178',
+  },
+  tab: {
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  thumbnail: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    margin: 5,
+  },
+
+  tabText: {
+    fontSize: 16,
+    color: '#888',
+  },
+  activeTabText: {
+    fontWeight: 'bold',
+    color: '#333',
   },
   calendarContainer: {
     marginBottom: 20,
@@ -263,23 +437,46 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     elevation: 2,
   },
+  eventRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  icon: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+  },
   eventText: {
     fontSize: 16,
     color: '#333',
   },
-  photoGalleryContainer: {
-    paddingHorizontal: 10,
-    paddingBottom: 20,
+  signUpButton: {
+    backgroundColor: '#4CAF50',
+    padding: 8,
+    borderRadius: 20,
+    marginTop: 10,
+    alignSelf: 'center',
   },
-  photoItem: {
-    marginRight: 10,
+  signUpButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  mediaRow: {
+    justifyContent: 'space-between',
+  },
+  mediaItem: {
+    flex: 1,
+    margin: 5,
     borderRadius: 10,
     overflow: 'hidden',
-  },
-  photo: {
-    width: '100%',
     height: 200,
-    resizeMode: 'cover',
+  },
+  media: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
   },
   modalContainer: {
     flex: 1,
@@ -294,13 +491,76 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 10,
     borderRadius: 20,
+    zIndex: 1,
+    margin: 10,
   },
   closeButtonText: {
     color: '#333',
     fontWeight: 'bold',
   },
-  fullImage: {
+
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+  },
+
+  fullMedia: {
     width: '90%',
     height: '70%',
+  },
+  newsItemContainer: {
+    marginBottom: 20,
+    padding: 30,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  newsItemImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+  newsItemHeadline: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginVertical: 5,
+    color: '#0d7178',
+    marginBottom: 20,
+  },
+  newsItemDescription: {
+    fontSize: 18,
+    color: '#555',
+    lineHeight: 22,
+  },
+  buttonBox: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 15,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  clearButton: {
+    backgroundColor: 'transparent',
+  },
+  buttonText: {
+    fontSize: 16,
+    color: '#333',
   },
 });
