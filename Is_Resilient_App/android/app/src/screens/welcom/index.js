@@ -18,7 +18,7 @@ export default function Welcome() {
         <Text style={styles.text1}> Let's Get Started!</Text>
         <View style={styles.imageContainer}>
           <Image
-            source={require('../../../../../assets/images/logois.jpg')}
+            source={require('../../../../../assets/images/welcome.jpg')}
             style={styles.image}
           />
         </View>
@@ -43,7 +43,7 @@ export default function Welcome() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#417e96',
+    backgroundColor: '#0d7178',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -69,15 +69,15 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: '100%',
-    height: '50%', // Adjust the height as per your requirement
+    height: '50%',
     justifyContent: 'center',
     alignItems: 'center',
     bottom: -60,
   },
   image: {
-    width: 350, // Adjust the width as per your requirement
-    height: 200, // Adjust the height as per your requirement
-    resizeMode: 'contain', // Adjust the resizeMode as per your requirement
+    width: 350,
+    height: 200,
+    resizeMode: 'contain',
   },
   button: {
     backgroundColor: 'white',
@@ -109,7 +109,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 5,
     borderRadius: 100,
-    marginLeft: 1, // Adds spacing between "Already have an account?" and "Log In"
-    // Add more styles as needed
+    marginLeft: 1,
   },
 });

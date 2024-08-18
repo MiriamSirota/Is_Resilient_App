@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -7,16 +7,32 @@ import {
   Image,
   TouchableOpacity,
   Modal,
+  Alert,
 } from 'react-native';
+import firestore from '@react-native-firebase/firestore';
 
-export default function ProfileScreen() {
+export default function MySpace() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [eventsAttended] = useState([
-    { name: 'BBQ 999 Brigade', date: '2024-07-17', photos: [] },
-    { name: 'AC Giving to 800 Brigade', date: '2024-07-17', photos: [] },
-    // Add more events as needed
-  ]);
+  const [events, setEvents] = useState([]);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const eventsCollection = await firestore().collection('events').get();
+        const eventsData = eventsCollection.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setEvents(eventsData);
+      } catch (error) {
+        Alert.alert('Error', 'Could not fetch events');
+        console.error('Error fetching events:', error); // Debug log
+      }
+    };
+
+    fetchEvents();
+  }, []);
 
   const handleImagePress = image => {
     setSelectedImage(image);
@@ -30,20 +46,21 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.sectionHeader}>My Events</Text>
-      {eventsAttended.map((event, index) => (
-        <View key={index} style={styles.eventBox}>
+      <Text style={styles.sectionHeader}>Event Archive</Text>
+      {events.map((event, index) => (
+        <View key={event.id} style={styles.eventBox}>
           <Text style={styles.eventText}>Event: {event.name}</Text>
           <Text style={styles.eventText}>Date: {event.date}</Text>
           <ScrollView horizontal style={styles.photoGallery}>
-            {event.photos.map((photo, photoIndex) => (
-              <TouchableOpacity
-                key={photoIndex}
-                style={styles.photoItem}
-                onPress={() => handleImagePress(photo)}>
-                <Image source={photo} style={styles.photo} />
-              </TouchableOpacity>
-            ))}
+            {event.photos &&
+              event.photos.map((photo, photoIndex) => (
+                <TouchableOpacity
+                  key={photoIndex}
+                  style={styles.photoItem}
+                  onPress={() => handleImagePress({uri: photo})}>
+                  <Image source={{uri: photo}} style={styles.photo} />
+                </TouchableOpacity>
+              ))}
           </ScrollView>
         </View>
       ))}

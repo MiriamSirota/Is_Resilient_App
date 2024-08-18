@@ -8,7 +8,8 @@ const qna = require('@tensorflow-models/qna');
 import {WebView} from 'react-native-webview';
 
 const Requests = () => {
-  let context = 'Hi Miriam, name is Noa, i got your number from my fried moshe yakir.';
+  let context = `Hi Miriam, my name is Noa, i got your number from my friend Moshe Yakir. I heard you have an organization that brings military equipment to soldiers. We are about 200 soldiers here at the north border, and we would really appreciate some warm clothes. Do you think you can bring us a few things? We would love some socks, coats, and flashlights. Thank you so much in advance!`;
+
   const injectedJavaScript = `document.getElementById('context').value = '${context}; '
   const meta = document.createElement('meta'); meta.setAttribute('name', 'viewport'); 
 meta.setAttribute('content', 'width=device-width,   initial-scale=1.0'); 
@@ -22,6 +23,10 @@ document.getElementsByTagName('head')[0].appendChild(meta);`;
         }}
         injectedJavaScript={injectedJavaScript}
         style={{flex: 1}}
+        onLoadEnd={() => {
+          this.webview.injectJavaScript(injectedJavaScript);
+        }}
+        ref={(ref) => { this.webview = ref; }}
       />
     );
   };

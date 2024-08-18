@@ -103,6 +103,12 @@ export default function HomeScreen() {
   };
 
   const handleSignUp = async event => {
+    if (!event || !event.name || !event.location) {
+      Alert.alert('Error', 'Invalid event data.');
+      console.error('Invalid event data:', event);
+      return;
+    }
+
     try {
       const currentUser = auth().currentUser;
 
@@ -121,12 +127,11 @@ export default function HomeScreen() {
           events: [{...event}],
         });
       } else {
-        // Update the existing user document
         const userData = userDoc.data();
         const updatedEvents = [...userData.events, {...event}];
 
         await userDocRef.update({
-          events: updatedEvents, // Update with the new event without timestamp
+          events: updatedEvents,
         });
       }
       Alert.alert(
@@ -172,19 +177,25 @@ export default function HomeScreen() {
   const newsFeedItems = [
     {
       id: '1',
-      image: require('../../../../../assets/images/hanikra1.jpeg'),
+      image: require('../../../../../assets/images/Casualty.jpg'),
       headline: 'Casualty Officers Event',
       description:
         'Last week we had an event for casualty officers. Thank you to everyone who came and helped. The event was a huge success.',
     },
     {
       id: '2',
-      image: require('../../../../../assets/images/hanikra2.jpeg'),
+      image: require('../../../../../assets/images/ac.jpg'),
+      headline: 'הכנסת מזגנים לעזה',
+      description:
+        'בימים האחרונים ארגון "חוסן ישראל", בתרומתם הנדיבה של יהודים מארה"ב, הכניס יחד עם הכוחות למעלה מ-100 מזגנים ניידים ומצננים כדי לסייע לכוחות בלחימה, ולייצר מרחבים נוחים יותר כדי להתרענן ולישון טוב בלילה.',
+    },
+    {
+      id: '3',
+      image: require('../../../../../assets/images/hanikra1.jpeg'),
       headline: 'BBQ to Brigade 999',
       description:
         'Last week we had an event for casualty officers. Thank you to everyone who came and helped. The event was a huge success.',
     },
-    // Add more items here
   ];
 
   const renderNewsItem = ({item}) => (

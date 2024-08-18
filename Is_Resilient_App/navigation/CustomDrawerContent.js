@@ -1,20 +1,9 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  Image,
-} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {auth} from '../config/firebase';
+import {View, Text, TouchableOpacity, StyleSheet, Image} from 'react-native';
 import {DrawerContentScrollView, DrawerItem} from '@react-navigation/drawer';
 import {useAuth} from '../android/app/src/context/AuthContext';
 
 const CustomDrawerContent = props => {
-  const navigation = useNavigation();
-
   const {handleLogout} = useAuth();
 
   return (
@@ -30,15 +19,16 @@ const CustomDrawerContent = props => {
           )}
           onPress={() => props.navigation.navigate('Home')}
         />
+
         <DrawerItem
-          label="My Space"
+          label="Inventory"
           icon={() => (
             <Image
-              source={require('../assets/images/profile.png')}
+              source={require('../assets/images/inventory1.png')}
               style={styles.iconImage}
             />
           )}
-          onPress={() => props.navigation.navigate('MySpace')}
+          onPress={() => props.navigation.navigate('Inventory')}
         />
 
         <DrawerItem
@@ -53,6 +43,17 @@ const CustomDrawerContent = props => {
         />
 
         <DrawerItem
+          label="Our History"
+          icon={() => (
+            <Image
+              source={require('../assets/images/archive.png')}
+              style={styles.iconImage}
+            />
+          )}
+          onPress={() => props.navigation.navigate('MySpace')}
+        />
+
+        <DrawerItem
           label="Create Event"
           icon={() => (
             <Image
@@ -63,16 +64,6 @@ const CustomDrawerContent = props => {
           onPress={() => props.navigation.navigate('CreateEvent')}
         />
 
-        <DrawerItem
-          label="Inventory"
-          icon={() => (
-            <Image
-              source={require('../assets/images/inventory1.png')}
-              style={styles.iconImage}
-            />
-          )}
-          onPress={() => props.navigation.navigate('Inventory')}
-        />
         <DrawerItem
           label="Add Item"
           icon={() => (
@@ -95,10 +86,10 @@ const CustomDrawerContent = props => {
         />
 
         <DrawerItem
-          label="Settings"
+          label="Profile"
           icon={() => (
             <Image
-              source={require('../assets/images/settings_icon.jpg')}
+              source={require('../assets/images/profile_icon.png')}
               style={styles.iconImage}
             />
           )}
@@ -107,6 +98,10 @@ const CustomDrawerContent = props => {
 
         <View style={styles.drawerFooter}>
           <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Image
+              source={require('../assets/images/logout_icon.png')}
+              style={styles.logoutIcon}
+            />
             <Text style={styles.logoutText}>Log Out</Text>
           </TouchableOpacity>
         </View>
@@ -120,21 +115,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   iconImage: {
-    width: 24, // Set appropriate width for the icon image
-    height: 24, // Set appropriate height for the icon image
-    marginRight: -20, // Adjust this to better position the icon
+    width: 24,
+    height: 24,
   },
   drawerFooter: {
-    marginTop: 'auto', // Push the footer to the bottom
-    padding: 40,
+    marginTop: 'auto',
+    paddingHorizontal: 20, // Match padding with other drawer items
+    paddingVertical: 10,
     borderTopWidth: 1,
     borderTopColor: '#ddd',
   },
   logoutButton: {
-    //backgroundColor: 'lightblue',
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderRadius: 5,
+  },
+  logoutIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 32,
   },
   logoutText: {
     fontSize: 16,

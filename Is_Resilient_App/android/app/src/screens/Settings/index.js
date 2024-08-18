@@ -1,30 +1,36 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Image } from 'react-native-elements';
-import { useNavigation } from '@react-navigation/native';
-import { auth } from '../.././../../../config/firebase';
-import React, { useState, useEffect } from 'react';
+import {useNavigation} from '@react-navigation/native';
+import {auth} from '../.././../../../config/firebase';
+import React, {useState, useEffect} from 'react';
 import {
+  SafeAreaView,
   View,
-  TextInput,
-  StyleSheet,
-  Alert,
   Text,
+  TextInput,
   TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Image,
+  Modal,
+  Alert,
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 
 export default function Settings() {
-  const navigation = useNavigation();
   const user = auth().currentUser;
-
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [eventsAttended, setEventsAttended] = useState([
+    {name: 'BBQ 999 Brigade', date: '2024-07-17', photos: []},
+    {name: 'AC Giving to 800 Brigade', date: '2024-07-17', photos: []},
+    // Add more events as needed
+  ]);
 
   useEffect(() => {
     const fetchUserDetails = async () => {
       if (user) {
-        console.log('Authenticated User UID:', user.uid); // Debug log
         try {
           const userDoc = await firestore()
             .collection('users')
@@ -32,14 +38,12 @@ export default function Settings() {
             .get();
           if (userDoc.exists) {
             const userData = userDoc.data();
-            console.log('User Data:', userData); // Debug log
             setName(userData.name);
             setEmail(user.email);
           } else {
             Alert.alert('Error', 'User not found');
           }
         } catch (error) {
-          console.error('Error fetching user details:', error); // Debug log
           Alert.alert('Error', 'Could not fetch user details');
         }
       } else {
@@ -58,26 +62,31 @@ export default function Settings() {
       if (password) {
         await user.updatePassword(password);
       }
-      await firestore().collection('users').doc(user.uid).update({ name });
+      await firestore().collection('users').doc(user.uid).update({name});
       Alert.alert('Success', 'User details updated');
     } catch (error) {
-      console.error('Error updating user details:', error); // Debug log
       Alert.alert('Error', error.message);
     }
   };
 
+  const handleImagePress = image => {
+    setSelectedImage(image);
+    setModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setSelectedImage(null);
+  };
+
   return (
-    <View style={styles.container}>
-      <SafeAreaView>
-        <View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
+        <View style={styles.profileContainer}>
           <Image
-            source={require('../../../../../assets/images/profile.png')}
+            source={require('../../../../../assets/images/profile1.png')}
             style={styles.image}
           />
-        </View>
-      </SafeAreaView>
-      <View style={styles.container2}>
-        <View>
           <Text style={styles.text}>Full Name</Text>
           <TextInput
             style={styles.box}
@@ -102,21 +111,74 @@ export default function Settings() {
           />
 
           <TouchableOpacity style={styles.button} onPress={handleSaveChanges}>
-            <Text> Save Changes </Text>
+            <Text style={styles.text1}> Save Changes </Text>
           </TouchableOpacity>
         </View>
-      </View>
-    </View>
+
+        <Text style={styles.sectionHeader}>My Events History</Text>
+        {eventsAttended.map((event, index) => (
+          <View key={index} style={styles.eventBox}>
+            <Text style={styles.eventText}>Event: {event.name}</Text>
+            <Text style={styles.eventText}>Date: {event.date}</Text>
+            <ScrollView horizontal style={styles.photoGallery}>
+              {event.photos.map((photo, photoIndex) => (
+                <TouchableOpacity
+                  key={photoIndex}
+                  style={styles.photoItem}
+                  onPress={() => handleImagePress(photo)}>
+                  <Image source={photo} style={styles.photo} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        ))}
+
+        {selectedImage && (
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={handleCloseModal}>
+            <View style={styles.modalContainer}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={handleCloseModal}>
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+              <Image
+                source={selectedImage}
+                style={styles.fullImage}
+                resizeMode="contain"
+              />
+            </View>
+          </Modal>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'white',
+  },
+  profileContainer: {
     padding: 20,
   },
-  container2: {
-    marginTop: 20,
+  image: {
+    width: 100,
+    height: 100,
+    alignSelf: 'center',
+  },
+  text: {
+    fontSize: 20,
+    marginBottom: 5,
+  },
+  text1: {
+    fontSize: 16,
+    marginBottom: 5,
+    color: 'white',
   },
   box: {
     borderBottomWidth: 1,
@@ -124,19 +186,64 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 15,
   },
-  text: {
-    fontSize: 16,
-    marginBottom: 5,
-  },
   button: {
-    backgroundColor: '#1E90FF',
+    backgroundColor: '#0d7178',
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
   },
-  image: {
+  sectionHeader: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    color: '#0d7178',
+  },
+  eventBox: {
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 10,
+    marginVertical: 10,
+    marginHorizontal: 20,
+    elevation: 2,
+  },
+  eventText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  photoGallery: {
+    marginTop: 10,
+  },
+  photoItem: {
+    marginRight: 10,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  photo: {
     width: 100,
     height: 100,
-    alignSelf: 'center',
+    resizeMode: 'cover',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 20,
+  },
+  closeButtonText: {
+    color: '#333',
+    fontWeight: 'bold',
+  },
+  fullImage: {
+    width: '90%',
+    height: '70%',
   },
 });

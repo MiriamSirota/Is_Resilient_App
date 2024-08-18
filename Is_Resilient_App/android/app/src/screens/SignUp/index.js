@@ -1,3 +1,4 @@
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -5,8 +6,10 @@ import {
   StyleSheet,
   TextInput,
   Alert,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import React, {useState} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Icon, Image} from 'react-native-elements';
 import {useNavigation} from '@react-navigation/native';
@@ -15,44 +18,36 @@ import {auth, firestore} from '../../../../../config/firebase';
 export default function SignUp() {
   const navigation = useNavigation();
 
-  // State management for each input field
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSignUp = async () => {
+    const trimmedEmail = email.trim(); // Trim whitespace from the email
+
     try {
-      // Create a new user with email and password
       const userCredential = await auth().createUserWithEmailAndPassword(
-        email,
+        trimmedEmail,
         password,
       );
       const user = userCredential.user;
 
-      // Optionally, you can update the user's profile with the full name
       await user.updateProfile({
         displayName: fullName,
       });
 
-      // Add user to Firestore 'users' collection
       await firestore().collection('users').doc(user.uid).set({
         name: fullName,
-        email,
-        role,
-        // Add other user details if needed
+        email: trimmedEmail,
       });
 
-      // Add user role to Firestore 'roles' collection
       await firestore().collection('roles').doc(user.uid).set({
-        role: 'user', // Default role, change as needed
+        role: 'user', // Default role
       });
 
-      // Notify the user of successful sign-up
       Alert.alert('Success', 'Account created successfully');
-      // Navigate to the login screen or home screen
-      navigation.navigate('LogIn'); // Adjust as needed
+      navigation.navigate('LogIn');
     } catch (error) {
-      // Handle errors (e.g., email already in use)
       if (error.code === 'auth/email-already-in-use') {
         Alert.alert('Error', 'This email address is already in use');
       } else if (error.code === 'auth/invalid-email') {
@@ -64,70 +59,95 @@ export default function SignUp() {
       }
     }
   };
+
   return (
-    <View style={styles.container}>
-      <SafeAreaView>
-        <View style={{flexDirection: 'row', alignItems: 'center', padding: 10}}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon
-              name="arrow-left"
-              type="font-awesome"
-              size={20}
-              color="black"
-            />
-          </TouchableOpacity>
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView contentContainerStyle={{flexGrow: 1}}>
+        <View style={styles.container}>
+          <SafeAreaView>
+            <View style={styles.header}>
+              <TouchableOpacity onPress={() => navigation.goBack()}>
+                <Icon
+                  name="arrow-left"
+                  type="font-awesome"
+                  size={20}
+                  color="black"
+                />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.imageContainer}>
+              <Image
+                source={require('../../../../../assets/images/profile1.png')}
+                style={styles.image}
+              />
+            </View>
+          </SafeAreaView>
+          <View style={styles.container2}>
+            <View>
+              <Text style={styles.text}>Full Name</Text>
+              <TextInput
+                style={styles.box}
+                value={fullName}
+                onChangeText={setFullName}
+                placeholder="Enter Name"
+              />
+              <Text style={styles.text}>Email Address</Text>
+              <TextInput
+                style={styles.box}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Enter Email"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              <Text style={styles.text}>Password</Text>
+              <TextInput
+                style={styles.box}
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Enter Password"
+              />
+              <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+                <Text style={styles.text4}> Sign Up </Text>
+              </TouchableOpacity>
+            </View>
+            <SafeAreaView style={styles.container3}>
+              <Text style={styles.text3}> Already have an account?</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('LogIn')}>
+                <Text style={styles.logInText}> Log In</Text>
+              </TouchableOpacity>
+            </SafeAreaView>
+          </View>
         </View>
-        <View>
-          <Image
-            source={require('../../../../../assets/images/profile.png')}
-            style={styles.image}
-          />
-        </View>
-      </SafeAreaView>
-      <View style={styles.container2}>
-        <View>
-          <Text style={styles.text}>Full Name</Text>
-          <TextInput
-            style={styles.box}
-            value={fullName}
-            onChangeText={setFullName} // Update state on change
-            placeholder="Enter Name"
-          />
-          <Text style={styles.text}>Email Address</Text>
-          <TextInput
-            style={styles.box}
-            value={email}
-            onChangeText={setEmail} // Update state on change
-            placeholder="Enter Email"
-            keyboardType="email-address"
-          />
-          <Text style={styles.text}>Password</Text>
-          <TextInput
-            style={styles.box}
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword} // Update state on change
-            placeholder="Enter Password"
-          />
-          <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-            <Text> Sign Up </Text>
-          </TouchableOpacity>
-        </View>
-        <SafeAreaView style={styles.container3}>
-          <Text style={styles.text3}> Already have an account?</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('LogIn')}>
-            <Text style={styles.logInText}> Log In</Text>
-          </TouchableOpacity>
-        </SafeAreaView>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#417e96',
+    backgroundColor: '#0d7178',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+  },
+  imageContainer: {
+    flexDirection: 'column', // Column layout to stack elements vertically
+    justifyContent: 'center', // Center elements vertically
+    alignItems: 'center', // Center elements horizontally
+    width: '100%', // Ensure container takes full width
+    height: 200, // Set a fixed height to ensure centering
+  },
+  image: {
+    width: 170,
+    height: 170,
+    resizeMode: 'contain', // Ensures the image maintains aspect ratio
   },
   container2: {
     backgroundColor: 'white',
@@ -136,8 +156,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '80%',
     bottom: -20,
-    borderRadius: 20, // Adjust this value to control the roundness
-    borderWidth: 1, // Optional: to see the border clearly
+    borderRadius: 20,
+    borderWidth: 1,
   },
   container3: {
     flexDirection: 'row',
@@ -151,27 +171,27 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'left',
     width: '100%',
-    marginBottom: 10, // Adds spacing between the boxes
+    marginBottom: 10,
   },
   text3: {
     color: 'black',
     fontSize: 16,
-    marginRight: 10, // Adds spacing between the text elements
+    marginRight: 10,
   },
-  image: {
-    width: '85%',
-    height: 170,
-    alignItems: 'center',
+  text4: {
+    color: 'white',
+    fontSize: 16,
+    marginRight: 10,
   },
   box: {
     backgroundColor: '#e3e5e8',
-    borderRadius: 10, // Adjust this value to control the roundness
-    marginBottom: 16, // Adds spacing between the boxes
-    paddingHorizontal: 10, // Add padding for better text visibility
-    height: 40, // Adjust height as needed
+    borderRadius: 10,
+    marginBottom: 16,
+    paddingHorizontal: 10,
+    height: 40,
   },
   button: {
-    backgroundColor: 'lightblue',
+    backgroundColor: '#0d7178',
     paddingVertical: 10,
     borderRadius: 100,
     marginTop: 20,
@@ -179,7 +199,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    color: 'gray',
+    color: '#ffff',
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
