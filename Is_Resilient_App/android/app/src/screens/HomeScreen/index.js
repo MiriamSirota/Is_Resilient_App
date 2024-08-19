@@ -21,6 +21,8 @@ import {
 } from '../../../../../config/firebase';
 import {useAuth} from '../../context/AuthContext';
 import {launchImageLibrary} from 'react-native-image-picker';
+import moment from 'moment';
+
 
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
@@ -34,43 +36,64 @@ export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('news'); // tabs
   const [selectedImage, setSelectedImage] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
-
   useEffect(() => {
-    // Set up a real-time listener for events
-    const unsubscribe = firestore()
-      .collection('events')
-      .onSnapshot(
-        snapshot => {
-          if (snapshot && !snapshot.empty) {
-            const eventsData = {};
+    let unsubscribe; // Declare unsubscribe variable
 
-            snapshot.forEach(doc => {
-              const event = doc.data();
-              const eventDate = event.date;
+    const fetchEvents = () => {
+      const currentUser = auth().currentUser;
+      if (currentUser) {
+        unsubscribe = firestore()
+          .collection('events')
+          .onSnapshot(
+            snapshot => {
+              if (snapshot && !snapshot.empty) {
+                const eventsData = {};
 
-              if (!eventsData[eventDate]) {
-                eventsData[eventDate] = [];
+                snapshot.forEach(doc => {
+                  const event = doc.data();
+                  const eventDate = event.date;
+
+                  if (!eventsData[eventDate]) {
+                    eventsData[eventDate] = [];
+                  }
+
+                  eventsData[eventDate].push({
+                    name: event.name,
+                    location: event.location,
+                    time: event.time,
+                  });
+                });
+
+                setEvents(eventsData);
+
+                // Set selectedDay to today if it's not already set
+                const today = moment().format('YYYY-MM-DD');
+                setSelectedDay(today);
+
+                // Automatically set today's events
+                setTodayEvents(eventsData[today] || []);
+              } else {
+                console.warn('Snapshot is empty or undefined:', snapshot);
+                setEvents({});
+                setTodayEvents([]); // Clear today's events if snapshot is invalid or empty
               }
+            },
+            error => {
+              if (error.code === 'permission-denied') {
+                console.error('Permission denied error:', error);
+              } else {
+                console.error('Error fetching events from Firestore:', error);
+              }
+            },
+          );
+      } else {
+        setEvents([]);
+        setTodayEvents([]); // Clear today's events if user is not authenticated
+      }
+    };
 
-              eventsData[eventDate].push({
-                name: event.name,
-                location: event.location,
-                time: event.time,
-              });
-            });
+    fetchEvents();
 
-            setEvents(eventsData);
-          } else {
-            console.warn('Snapshot is empty or undefined:', snapshot);
-            setEvents({}); // Clear events if snapshot is invalid or empty
-          }
-        },
-        error => {
-          console.error('Error fetching events from Firestore:', error);
-        },
-      );
-
-    // Fetch all images from Firebase Storage when the component mounts
     const loadGalleryImages = async () => {
       const images = await fetchGalleryImages();
       setGalleryImages(images);
@@ -78,13 +101,12 @@ export default function HomeScreen() {
 
     loadGalleryImages();
 
-    // Cleanup function to unsubscribe from the listener when the component unmounts
     return () => {
       if (unsubscribe) {
         unsubscribe();
       }
     };
-  }, []);
+  }, [auth().currentUser]);
 
   const handleImagePress = image => {
     setSelectedMedia(image);
@@ -102,50 +124,52 @@ export default function HomeScreen() {
     setTodayEvents(eventsForDay);
   };
 
-  const handleSignUp = async event => {
+  const handleSignUp = async (event) => {
     if (!event || !event.name || !event.location) {
       Alert.alert('Error', 'Invalid event data.');
       console.error('Invalid event data:', event);
       return;
     }
-
+  
     try {
       const currentUser = auth().currentUser;
-
+  
       if (!currentUser) {
         Alert.alert('Error', 'You need to be logged in to sign up for events.');
         return;
       }
-
+  
       const userId = currentUser.uid;
       const userDocRef = firestore().collection('users').doc(userId);
-
+  
       const userDoc = await userDocRef.get();
-
+  
       if (!userDoc.exists) {
         await userDocRef.set({
-          events: [{...event}],
+          events: [{ ...event }],
         });
       } else {
         const userData = userDoc.data();
-        const updatedEvents = [...userData.events, {...event}];
-
+        const updatedEvents = [...(userData.events || []), { ...event }];
+  
         await userDocRef.update({
           events: updatedEvents,
         });
       }
+  
       Alert.alert(
         'Signed Up',
-        `You have signed up for ${event.name} at ${event.location}!`,
+        `You have signed up for ${event.name} at ${event.location}!`
       );
     } catch (error) {
       console.error('Error signing up for event:', error); // This will log the exact error
       Alert.alert(
         'Error',
-        'There was a problem signing up for the event. Please try again.',
+        'There was a problem signing up for the event. Please try again.'
       );
     }
   };
+  
 
   const markedDates = Object.keys(events).reduce((acc, date) => {
     acc[date] = {dots: [{color: 'blue'}]};
